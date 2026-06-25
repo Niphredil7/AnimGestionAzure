@@ -1,10 +1,15 @@
-name: CI AnimGestion
+name: CI/CD AnimGestion
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  FRONT_IMAGE: animgestion-front
+  BACK_IMAGE: animgestion-back
 
 jobs:
   front:
@@ -23,10 +28,17 @@ jobs:
           cache: npm
           cache-dependency-path: AnimGestionFront/package-lock.json
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:run
-      - run: npm run build
+      - name: Install front
+        run: npm ci
+
+      - name: Lint front
+        run: npm run lint
+
+      - name: Unit tests front
+        run: npm run test:run
+
+      - name: Build front
+        run: npm run build
 
   back:
     runs-on: ubuntu-latest
@@ -44,7 +56,52 @@ jobs:
           cache: npm
           cache-dependency-path: AnimGestionBack/package-lock.json
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test
-      - run: npm run build
+      - name: Install back
+        run: npm ci
+
+      - name: Lint back
+        run: npm run lint
+
+      - name: Unit tests back
+        run: npm run test
+
+      - name: Build back
+        run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [front, back]
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login to ACR
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ secrets.ACR_LOGIN_SERVER }} \
+            --username "${{ secrets.ACR_USERNAME }}" \
+            --password-stdin
+
+      - name: Build front image
+        run: |
+          docker build \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-front:${{ github.sha }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-front:latest \
+            ./AnimGestionFront
+
+      - name: Push front image
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-front:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-front:latest
+
+      - name: Build back image
+        run: |
+          docker build \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-back:${{ github.sha }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-back:latest \
+            ./AnimGestionBack
+
+      - name: Push back image
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-back:${{ github.sha }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/animgestion-back:latest
