@@ -1,0 +1,43 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: anims-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  back:
+    build:
+      context: ./AnimGestionBack
+    container_name: anims-back
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mysql://root:root@mysql:3306/auth
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  front:
+    build:
+      context: ./AnimGestionFront
+    container_name: anims-front
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - back
+
+volumes:
+  mysql_data:
