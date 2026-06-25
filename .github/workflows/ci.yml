@@ -1,0 +1,50 @@
+name: CI AnimGestion
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  front:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: AnimGestionFront
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: AnimGestionFront/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:run
+      - run: npm run build
+
+  back:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: AnimGestionBack
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: AnimGestionBack/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
