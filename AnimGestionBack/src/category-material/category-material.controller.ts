@@ -13,7 +13,6 @@ import {
 import { CategoryMaterialService } from './category-material.service';
 import { CreateCategoryMaterialDto } from './dto/create-category-material.dto';
 import { UpdateCategoryMaterialDto } from './dto/update-category-material.dto';
-import { IRequestWithPayload } from 'src/auth/interfaces';
 import { ResponseInterfaceWithData } from 'src/response.interface';
 import { CategoryMaterial } from '@prisma/client';
 import { CustomHttpException } from 'src/utils/custom.exception';

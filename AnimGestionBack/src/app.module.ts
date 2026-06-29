@@ -17,6 +17,7 @@ import { ActivityModule } from './activity/activity.module';
 import { UserHasNotificationModule } from './user-has-notification/user-has-notification.module';
 import { OutingModule } from './outing/outing.module';
 import { PlanningActivityModule } from './planning-activity/planning-activity.module';
+import { CategoryHasMaterialModule } from './category-has-material/category-has-material.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PlanningActivityModule } from './planning-activity/planning-activity.mo
     UserHasNotificationModule,
     OutingModule,
     PlanningActivityModule,
+    CategoryHasMaterialModule,
   ],
   controllers: [],
   providers: [],

@@ -4,28 +4,46 @@ import { UpdateCategoryMaterialDto } from './dto/update-category-material.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { CategoryMaterial } from '@prisma/client';
 
+
 @Injectable()
 export class CategoryMaterialService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(body: CreateCategoryMaterialDto): Promise<CategoryMaterial> {
-    const {
-      existingMaterialIds = [],
-      newMaterials = [],
-      ...categoryData
-    } = body;
-    return await this.prisma.categoryMaterial.create({
+async create(body: CreateCategoryMaterialDto): Promise<CategoryMaterial> {
+  const { existingMaterialIds = [], newMaterials = [], ...categoryData } = body;
+
+  const category = await this.prisma.categoryMaterial.create({
+    data: {
+      ...categoryData,
+    },
+  });
+
+  for (const materialId of existingMaterialIds) {
+    await this.prisma.categoryHasMaterial.create({
       data: {
-        ...categoryData,
-        materials: {
-          connect: existingMaterialIds.map((id) => ({ id })),
-          create: newMaterials.map((m) => ({
-            name: m.name,
-          })),
-        },
+        categoryMaterialId: category.id,
+        materialId,
       },
     });
   }
+
+  for (const material of newMaterials) {
+    const createdMaterial = await this.prisma.material.create({
+      data: {
+        name: material.name,
+      },
+    });
+
+    await this.prisma.categoryHasMaterial.create({
+      data: {
+        categoryMaterialId: category.id,
+        materialId: createdMaterial.id,
+      },
+    });
+  }
+
+  return category;
+}
 
   async findAll(): Promise<CategoryMaterial[]> {
     return await this.prisma.categoryMaterial.findMany();
