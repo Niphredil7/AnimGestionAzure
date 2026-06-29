@@ -41,12 +41,14 @@ function App() {
           <Route element={<PrivateRouteRole role="VISITOR" />}>
             <Route path="/profile" element={<UserLayout />}>
               <Route index element={<ProfilePage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
             </Route>
           </Route>
 
           <Route element={<PrivateRouteRole role="PARENT" />}>
             <Route path="/parent" element={<ParentLayout />}>
               <Route index element={<ProfilePage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
             </Route>
           </Route>
 

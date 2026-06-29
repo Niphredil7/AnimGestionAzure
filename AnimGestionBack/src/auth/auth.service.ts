@@ -64,6 +64,29 @@ export class AuthService {
       where: { type_userId: { type, userId } },
     });
   }
-}
 
+async createAuthLog(data: {
+  email?: string;
+  userId?: string | null; // ou number si User.id est un Int
+  status: 'SUCCESS' | 'FAILED';
+  reason?: string;
+  ipAddress?: string;
+  userAgent?: string | string[];
+  route?: string;
+}) {
+  return this.prisma.authLog.create({
+    data: {
+      email: data.email,
+      userId: data.userId,
+      status: data.status,
+      reason: data.reason,
+      ipAddress: data.ipAddress,
+      userAgent: Array.isArray(data.userAgent)
+        ? data.userAgent.join(', ')
+        : data.userAgent,
+      route: data.route,
+    },
+  });
+}
+}
 export { IPayload };

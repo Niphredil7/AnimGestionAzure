@@ -27,7 +27,7 @@ export class AuthController {
 
   @Public()
   @Post('signup')
-  async signUp(@Body() body: RegisterDto) {
+  async signUp(@Body() body: RegisterDto, @Req() req: Request) {
     body.password = await this.authService.hash(body.password);
     const user = await this.userService.create(body);
     return {
@@ -37,15 +37,27 @@ export class AuthController {
   }
   @Public()
   @Post('signin')
-  async signIn(@Body() body: SigninDto) {
+  async signIn(@Body() body: SigninDto, @Req() req: Request) {
     const user = await this.userService.findByEmail(body.email);
-    if (!user) {
-      throw new CustomHttpException(
-        "Cet utilisateur n'existe pas",
-        HttpStatus.NOT_FOUND,
-        'AC-s1-1',
-      );
-    }
+     if (!user) {
+     await this.authService.createAuthLog({
+    email: user.email,
+    userId: user.id,
+    status: 'SUCCESS',
+    reason: 'SIGNUP_SUCCESS',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+    route: req.originalUrl,
+  });
+
+
+    throw new CustomHttpException(
+      "Cet utilisateur n'existe pas",
+      HttpStatus.NOT_FOUND,
+      'AC-s1-1',
+    );
+  }
+
     const compare = await this.authService.compare(
       user.password,
       body.password,
@@ -66,6 +78,17 @@ export class AuthController {
     );
     const hashed_refresh_token = await this.authService.hash(refresh_token);
     await this.authService.upsertToken(user.id, hashed_refresh_token);
+
+     await this.authService.createAuthLog({
+    email: body.email,
+    userId: user.id,
+    status: 'SUCCESS',
+    reason: 'LOGIN_SUCCESS',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+    route: req.originalUrl,
+  });
+
     delete user.password;
     return {
       data: { user, access_token, refresh_token },

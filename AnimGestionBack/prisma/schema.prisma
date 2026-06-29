@@ -13,6 +13,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model AuthLog {
+  id          String      @id @default(uuid())
+  email       String?
+  userId      String? 
+  status      LoginStatus
+  reason      String?
+  ipAddress   String?
+  userAgent   String?
+  route       String?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+enum LoginStatus {
+  SUCCESS
+  FAILED
+}
+
 model School {
   id String @id @default(uuid())
   name String @db.VarChar(100)
@@ -106,6 +125,8 @@ model User {
   tokens Token[]
 
   outings Outing[]
+
+  authLog AuthLog[]
 }
 
 enum Visible {
@@ -213,7 +234,8 @@ model Material {
   name String @db.VarChar(100)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  categories CategoryMaterial[]
+
+  CategoryHasMaterial CategoryHasMaterial[]
 }
 
 model CategoryMaterial {
@@ -221,19 +243,21 @@ model CategoryMaterial {
   name String @db.VarChar(100)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  materials Material[]
+
   activities Activity[]
+
+  CategoryHasMaterial CategoryHasMaterial[]
 }
 
-// model CategoryHasMaterial {
-//   categoryMaterialId String
-//   materialId String
-//   categoryMaterial CategoryMaterial @relation(fields:[categoryMaterialId], references:[id])
-//   material Material @relation(fields:[materialId], references:[id])
+model CategoryHasMaterial {
+  categoryMaterialId String
+  materialId String
+  categoryMaterial CategoryMaterial @relation(fields:[categoryMaterialId], references:[id])
+  material Material @relation(fields:[materialId], references:[id])
 
-//   @@id([materialId, categoryMaterialId])
+  @@id([materialId, categoryMaterialId])
 
-// }
+}
 
 model Feedback {
   status Favorite @default(IsFavorite)
