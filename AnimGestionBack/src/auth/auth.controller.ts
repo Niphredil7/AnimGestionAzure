@@ -16,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { IRequestWithPayloadAndRefresh } from './interfaces';
 import { Public } from './decorators/public.decorator';
 import { RefreshTokenGuard } from './guard/refresh-token.guards';
+import type { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +28,7 @@ export class AuthController {
 
   @Public()
   @Post('signup')
-  async signUp(@Body() body: RegisterDto, @Req() req: Request) {
+  async signUp(@Body() body: RegisterDto) {
     body.password = await this.authService.hash(body.password);
     const user = await this.userService.create(body);
     return {
@@ -41,10 +42,10 @@ export class AuthController {
     const user = await this.userService.findByEmail(body.email);
      if (!user) {
      await this.authService.createAuthLog({
-    email: user.email,
-    userId: user.id,
-    status: 'SUCCESS',
-    reason: 'SIGNUP_SUCCESS',
+     email: body.email,
+    userId: null,
+    status: 'FAILED',
+    reason: 'USER_NOT_FOUND',
     ipAddress: req.ip,
     userAgent: req.headers['user-agent'],
     route: req.originalUrl,
@@ -115,7 +116,7 @@ export class AuthController {
       { expiresIn: '1d', secret: process.env.REFRESH_SECRET_KEY },
     );
     const hashed_refresh_token = await this.authService.hash(refresh_token);
-    this.authService.upsertToken(req.user.id, hashed_refresh_token);
+    await this.authService.upsertToken(req.user.id, hashed_refresh_token);
     return {
       data: { access_token, refresh_token },
       message: 'Vous êtes bien reconnectés',
